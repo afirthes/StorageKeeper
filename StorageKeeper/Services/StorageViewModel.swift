@@ -190,6 +190,22 @@ final class StorageViewModel: ObservableObject {
         }
     }
 
+    func setPrimaryContainerPhoto(_ container: StorageContainer, photoKey: String) async throws {
+        guard container.primaryDisplayPhotoKey != photoKey else {
+            return
+        }
+
+        try await authenticated {
+            let photoKeys = Self.photoKeys(container.displayPhotoKeys, movingFirst: photoKey)
+            let updated: StorageContainer = try await self.api.patch("/containers/\(container.id.uuidString)", body: PhotoPrimaryPatchRequest(
+                photoKey: photoKey,
+                photoKeys: photoKeys,
+                primaryPhotoKey: photoKey
+            ))
+            self.containers = self.containers.map { $0.id == updated.id ? updated : $0 }
+        }
+    }
+
     func deleteContainer(_ container: StorageContainer) async throws {
         try await authenticated {
             try await self.api.delete("/containers/\(container.id.uuidString)")
@@ -227,6 +243,22 @@ final class StorageViewModel: ObservableObject {
             ))
             let _: StoredItem = try await self.api.put("/items/\(item.id.uuidString)/tags", body: TagAssignmentRequest(tagIds: tagIDs))
             try await self.refreshData()
+        }
+    }
+
+    func setPrimaryItemPhoto(_ item: StoredItem, photoKey: String) async throws {
+        guard item.primaryDisplayPhotoKey != photoKey else {
+            return
+        }
+
+        try await authenticated {
+            let photoKeys = Self.photoKeys(item.displayPhotoKeys, movingFirst: photoKey)
+            let updated: StoredItem = try await self.api.patch("/items/\(item.id.uuidString)", body: PhotoPrimaryPatchRequest(
+                photoKey: photoKey,
+                photoKeys: photoKeys,
+                primaryPhotoKey: photoKey
+            ))
+            self.items = self.items.map { $0.id == updated.id ? updated : $0 }
         }
     }
 
@@ -273,6 +305,10 @@ final class StorageViewModel: ObservableObject {
         let photoKeys = uploaded.map(\.key)
         let primaryPhotoKey = uploaded.first { $0.id == primaryPhotoID }?.key ?? photoKeys.first
         return (photoKeys, primaryPhotoKey)
+    }
+
+    private static func photoKeys(_ keys: [String], movingFirst primaryKey: String) -> [String] {
+        [primaryKey] + keys.filter { $0 != primaryKey }
     }
 
     private func authenticated<T>(_ operation: () async throws -> T) async throws -> T {
@@ -380,6 +416,12 @@ private struct ItemPatchRequest: Codable {
     var photoKey: String?
     var photoKeys: [String]
     var primaryPhotoKey: String?
+}
+
+private struct PhotoPrimaryPatchRequest: Codable {
+    var photoKey: String
+    var photoKeys: [String]
+    var primaryPhotoKey: String
 }
 
 private struct TagSaveRequest: Codable {

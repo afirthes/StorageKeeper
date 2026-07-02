@@ -78,6 +78,20 @@ struct ItemPhotoView: View {
 struct PhotoGalleryBannerView: View {
     let photoKeys: [String]
     let placeholderSystemName: String
+    let primaryPhotoKey: String?
+    let onPrimaryPhotoChange: ((String) -> Void)?
+
+    init(
+        photoKeys: [String],
+        placeholderSystemName: String,
+        primaryPhotoKey: String? = nil,
+        onPrimaryPhotoChange: ((String) -> Void)? = nil
+    ) {
+        self.photoKeys = photoKeys
+        self.placeholderSystemName = placeholderSystemName
+        self.primaryPhotoKey = primaryPhotoKey
+        self.onPrimaryPhotoChange = onPrimaryPhotoChange
+    }
 
     var body: some View {
         ZStack {
@@ -104,6 +118,21 @@ struct PhotoGalleryBannerView: View {
 
                                     RemotePhotoView(photoKey: photoKey, placeholderSystemName: placeholderSystemName, contentMode: .fit)
                                         .padding(1)
+
+                                    if let onPrimaryPhotoChange {
+                                        Button {
+                                            onPrimaryPhotoChange(photoKey)
+                                        } label: {
+                                            Image(systemName: photoKey == resolvedPrimaryPhotoKey ? "heart.fill" : "heart")
+                                                .font(.system(size: 17, weight: .bold))
+                                                .foregroundStyle(photoKey == resolvedPrimaryPhotoKey ? .pink : .white)
+                                                .frame(width: 38, height: 38)
+                                                .background(.black.opacity(0.52), in: Circle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                                        .padding(10)
+                                    }
                                 }
                                 .frame(width: proxy.size.width, height: proxy.size.height)
                             }
@@ -123,6 +152,14 @@ struct PhotoGalleryBannerView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(.secondary.opacity(0.16), lineWidth: 1)
         }
+    }
+
+    private var resolvedPrimaryPhotoKey: String? {
+        if let primaryPhotoKey, photoKeys.contains(primaryPhotoKey) {
+            return primaryPhotoKey
+        }
+
+        return photoKeys.first
     }
 }
 

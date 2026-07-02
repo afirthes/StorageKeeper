@@ -40,13 +40,18 @@ struct StoredItem: Identifiable, Codable, Hashable {
     }
 
     var displayPhotoKeys: [String] {
-        photoKeys.isEmpty ? (photoKey.map { [$0] } ?? []) : photoKeys
+        let keys = photoKeys.isEmpty ? (photoKey.map { [$0] } ?? []) : photoKeys
+        let primaryKey = primaryPhotoKey.flatMap { keys.contains($0) ? $0 : nil }
+            ?? photoKey.flatMap { keys.contains($0) ? $0 : nil }
+
+        guard let primaryKey else {
+            return keys
+        }
+
+        return [primaryKey] + keys.filter { $0 != primaryKey }
     }
 
     var primaryDisplayPhotoKey: String? {
-        if let primaryPhotoKey, displayPhotoKeys.contains(primaryPhotoKey) {
-            return primaryPhotoKey
-        }
-        return photoKey ?? displayPhotoKeys.first
+        displayPhotoKeys.first
     }
 }

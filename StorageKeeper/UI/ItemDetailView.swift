@@ -16,7 +16,16 @@ struct ItemDetailView: View {
             if let item {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        PhotoGalleryBannerView(photoKeys: item.displayPhotoKeys, placeholderSystemName: "photo")
+                        PhotoGalleryBannerView(
+                            photoKeys: item.displayPhotoKeys,
+                            placeholderSystemName: "photo",
+                            primaryPhotoKey: item.primaryDisplayPhotoKey,
+                            onPrimaryPhotoChange: { photoKey in
+                                Task {
+                                    try? await store.setPrimaryItemPhoto(item, photoKey: photoKey)
+                                }
+                            }
+                        )
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text(item.name)

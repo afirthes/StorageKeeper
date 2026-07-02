@@ -106,7 +106,16 @@ struct ItemFeedCard: View {
     @ViewBuilder
     private var photo: some View {
         if !item.displayPhotoKeys.isEmpty {
-            PhotoGalleryBannerView(photoKeys: item.displayPhotoKeys, placeholderSystemName: "photo")
+            PhotoGalleryBannerView(
+                photoKeys: item.displayPhotoKeys,
+                placeholderSystemName: "photo",
+                primaryPhotoKey: item.primaryDisplayPhotoKey,
+                onPrimaryPhotoChange: { photoKey in
+                    Task {
+                        try? await store.setPrimaryItemPhoto(item, photoKey: photoKey)
+                    }
+                }
+            )
         } else {
             ZStack {
                 Rectangle()
