@@ -1,17 +1,13 @@
-import SwiftData
 import SwiftUI
 
 @main
 struct StorageKeeperApp: App {
+    @StateObject private var store = StorageViewModel()
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(store)
         }
-        .modelContainer(for: [
-            StorageContainer.self,
-            StoredItem.self,
-            StorageTag.self,
-            TagAssignment.self
-        ])
     }
 }

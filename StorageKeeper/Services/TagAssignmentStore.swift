@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 
 enum TagUtilities {
     static func normalizedTagName(_ text: String) -> String {
@@ -75,57 +74,5 @@ enum TagUtilities {
         }
 
         return visibleTags.joined(separator: " ")
-    }
-}
-
-enum TagAssignmentStore {
-    static func tagIDs(
-        for targetID: UUID,
-        targetType: TagTargetType,
-        assignments: [TagAssignment]
-    ) -> Set<UUID> {
-        Set(
-            assignments
-                .filter { $0.targetID == targetID && $0.targetTypeRaw == targetType.rawValue }
-                .map(\.tagID)
-        )
-    }
-
-    static func sync(
-        targetID: UUID,
-        targetType: TagTargetType,
-        selectedTagIDs: Set<UUID>,
-        assignments: [TagAssignment],
-        modelContext: ModelContext
-    ) {
-        let existingAssignments = assignments.filter {
-            $0.targetID == targetID && $0.targetTypeRaw == targetType.rawValue
-        }
-        let existingTagIDs = Set(existingAssignments.map(\.tagID))
-
-        for assignment in existingAssignments where !selectedTagIDs.contains(assignment.tagID) {
-            modelContext.delete(assignment)
-        }
-
-        for tagID in selectedTagIDs.subtracting(existingTagIDs) {
-            modelContext.insert(
-                TagAssignment(
-                    tagID: tagID,
-                    targetID: targetID,
-                    targetType: targetType
-                )
-            )
-        }
-    }
-
-    static func deleteAssignments(
-        for targetID: UUID,
-        targetType: TagTargetType,
-        assignments: [TagAssignment],
-        modelContext: ModelContext
-    ) {
-        for assignment in assignments where assignment.targetID == targetID && assignment.targetTypeRaw == targetType.rawValue {
-            modelContext.delete(assignment)
-        }
     }
 }

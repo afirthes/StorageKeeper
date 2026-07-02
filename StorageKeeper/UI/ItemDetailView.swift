@@ -1,15 +1,10 @@
-import SwiftData
 import SwiftUI
 
 struct ItemDetailView: View {
+    @EnvironmentObject private var store: StorageViewModel
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \StorageContainer.name, order: .forward) private var containers: [StorageContainer]
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
-
-    let item: StoredItem
+    let itemID: UUID
 
     @State private var isEditing = false
     @State private var isConfirmingDeletion = false
@@ -17,125 +12,116 @@ struct ItemDetailView: View {
     @State private var isShowingTagHierarchy = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                ItemPhotoBannerView(filename: item.photoFilename)
+        Group {
+            if let item {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        ItemPhotoBannerView(photoKey: item.photoKey)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(item.name)
-                        .font(.title.bold())
-                        .textSelection(.enabled)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(item.name)
+                                .font(.title.bold())
+                                .textSelection(.enabled)
 
-                    Label(locationTitle, systemImage: "shippingbox")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                            Label(locationTitle(for: item), systemImage: "shippingbox")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
 
-                if !itemTags.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Теги")
-                            .font(.headline)
+                        let itemTags = tags(for: item)
+                        if !itemTags.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Теги")
+                                    .font(.headline)
 
-                        TagFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
-                            ForEach(itemTags) { tag in
-                                TagChipView(
-                                    title: TagUtilities.displayName(tag),
-                                    onTap: {
-                                        viewedTagIDs = [tag.id]
-                                        isShowingTagHierarchy = true
+                                TagFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                                    ForEach(itemTags) { tag in
+                                        TagChipView(
+                                            title: TagUtilities.displayName(tag),
+                                            onTap: {
+                                                viewedTagIDs = [tag.id]
+                                                isShowingTagHierarchy = true
+                                            }
+                                        )
                                     }
-                                )
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Описание")
+                                .font(.headline)
+
+                            if item.itemDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Text("Описание пока не добавлено.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(item.itemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+                                    .textSelection(.enabled)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+                .navigationTitle(item.name)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button {
+                            isEditing = true
+                        } label: {
+                            Image(systemName: "square.and.pencil")
+                        }
+                        .accessibilityLabel("Редактировать вещь")
+
+                        Button(role: .destructive) {
+                            isConfirmingDeletion = true
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .accessibilityLabel("Удалить вещь")
                     }
                 }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Описание")
-                        .font(.headline)
-
-                    if trimmedDescription.isEmpty {
-                        Text("Описание пока не добавлено.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(trimmedDescription)
-                            .textSelection(.enabled)
+                .sheet(isPresented: $isEditing) {
+                    ItemEditorView(mode: .edit(item))
+                }
+                .sheet(isPresented: $isShowingTagHierarchy) {
+                    NavigationStack {
+                        TagHierarchyView(mode: .viewing, selectedTagIDs: .constant(viewedTagIDs))
                     }
                 }
-            }
-            .padding()
-        }
-        .navigationTitle(item.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
-                    isEditing = true
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                }
-                .accessibilityLabel("Редактировать вещь")
+                .confirmationDialog("Удалить вещь?", isPresented: $isConfirmingDeletion) {
+                    Button("Удалить", role: .destructive) {
+                        Task {
+                            try? await store.deleteItem(item)
+                            dismiss()
+                        }
+                    }
 
-                Button(role: .destructive) {
-                    isConfirmingDeletion = true
-                } label: {
-                    Image(systemName: "trash")
+                    Button("Отмена", role: .cancel) {}
+                } message: {
+                    Text("Фотография этой вещи тоже будет удалена.")
                 }
-                .accessibilityLabel("Удалить вещь")
+            } else {
+                ContentUnavailableView("Вещь не найдена", systemImage: "tag")
             }
-        }
-        .sheet(isPresented: $isEditing) {
-            ItemEditorView(mode: .edit(item))
-        }
-        .sheet(isPresented: $isShowingTagHierarchy) {
-            NavigationStack {
-                TagHierarchyView(mode: .viewing, selectedTagIDs: .constant(viewedTagIDs))
-            }
-        }
-        .confirmationDialog("Удалить вещь?", isPresented: $isConfirmingDeletion) {
-            Button("Удалить", role: .destructive) {
-                deleteItem()
-            }
-
-            Button("Отмена", role: .cancel) {}
-        } message: {
-            Text("Фотография этой вещи тоже будет удалена.")
         }
     }
 
-    private var trimmedDescription: String {
-        item.itemDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var item: StoredItem? {
+        store.items.first { $0.id == itemID }
     }
 
-    private var locationTitle: String {
+    private func locationTitle(for item: StoredItem) -> String {
         guard let containerID = item.containerID else {
             return "Без контейнера"
         }
 
-        return containers.first { $0.id == containerID }?.name ?? "Контейнер не найден"
+        return store.containers.first { $0.id == containerID }?.name ?? "Контейнер не найден"
     }
 
-    private var itemTags: [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: item.id,
-            targetType: .item,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
-    }
-
-    private func deleteItem() {
-        ItemImageStore.deletePhoto(named: item.photoFilename)
-        TagAssignmentStore.deleteAssignments(
-            for: item.id,
-            targetType: .item,
-            assignments: tagAssignments,
-            modelContext: modelContext
-        )
-        modelContext.delete(item)
-        try? modelContext.save()
-        dismiss()
+    private func tags(for item: StoredItem) -> [StorageTag] {
+        TagUtilities.selectedTags(tagIDs: item.tagIds, allTags: store.tags)
     }
 }

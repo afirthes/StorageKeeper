@@ -10,7 +10,6 @@
 		B00100000000000000000001 /* StorageKeeperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000001 /* StorageKeeperApp.swift */; };
 		B00100000000000000000002 /* StorageContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000002 /* StorageContainer.swift */; };
 		B00100000000000000000003 /* StoredItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000003 /* StoredItem.swift */; };
-		B00100000000000000000004 /* ItemImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000004 /* ItemImageStore.swift */; };
 		B00100000000000000000005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000005 /* RootView.swift */; };
 		B00100000000000000000006 /* ContainerContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000006 /* ContainerContentView.swift */; };
 		B00100000000000000000007 /* SearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000007 /* SearchResultsView.swift */; };
@@ -24,13 +23,16 @@
 		B0010000000000000000000F /* TagAssignmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000012 /* TagAssignmentStore.swift */; };
 		B00100000000000000000010 /* TagHierarchyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000013 /* TagHierarchyView.swift */; };
 		B00100000000000000000011 /* TagChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000014 /* TagChipView.swift */; };
+		B00100000000000000000012 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000015 /* APIClient.swift */; };
+		B00100000000000000000013 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000016 /* KeychainStore.swift */; };
+		B00100000000000000000014 /* StorageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000017 /* StorageViewModel.swift */; };
+		B00100000000000000000015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000018 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		B00200000000000000000001 /* StorageKeeperApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageKeeperApp.swift; sourceTree = "<group>"; };
 		B00200000000000000000002 /* StorageContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageContainer.swift; sourceTree = "<group>"; };
 		B00200000000000000000003 /* StoredItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredItem.swift; sourceTree = "<group>"; };
-		B00200000000000000000004 /* ItemImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemImageStore.swift; sourceTree = "<group>"; };
 		B00200000000000000000005 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		B00200000000000000000006 /* ContainerContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerContentView.swift; sourceTree = "<group>"; };
 		B00200000000000000000007 /* SearchResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsView.swift; sourceTree = "<group>"; };
@@ -47,6 +49,10 @@
 		B00200000000000000000012 /* TagAssignmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagAssignmentStore.swift; sourceTree = "<group>"; };
 		B00200000000000000000013 /* TagHierarchyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagHierarchyView.swift; sourceTree = "<group>"; };
 		B00200000000000000000014 /* TagChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChipView.swift; sourceTree = "<group>"; };
+		B00200000000000000000015 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		B00200000000000000000016 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		B00200000000000000000017 /* StorageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageViewModel.swift; sourceTree = "<group>"; };
+		B00200000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,8 +100,10 @@
 		B00400000000000000000004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				B00200000000000000000004 /* ItemImageStore.swift */,
 				B00200000000000000000012 /* TagAssignmentStore.swift */,
+				B00200000000000000000015 /* APIClient.swift */,
+				B00200000000000000000016 /* KeychainStore.swift */,
+				B00200000000000000000017 /* StorageViewModel.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -108,6 +116,7 @@
 				B00200000000000000000007 /* SearchResultsView.swift */,
 				B00200000000000000000008 /* ItemDetailView.swift */,
 				B00200000000000000000013 /* TagHierarchyView.swift */,
+				B00200000000000000000018 /* SettingsView.swift */,
 				B00400000000000000000006 /* Components */,
 				B00400000000000000000007 /* Editors */,
 			);
@@ -213,7 +222,6 @@
 				B00100000000000000000001 /* StorageKeeperApp.swift in Sources */,
 				B00100000000000000000002 /* StorageContainer.swift in Sources */,
 				B00100000000000000000003 /* StoredItem.swift in Sources */,
-				B00100000000000000000004 /* ItemImageStore.swift in Sources */,
 				B00100000000000000000005 /* RootView.swift in Sources */,
 				B00100000000000000000006 /* ContainerContentView.swift in Sources */,
 				B00100000000000000000007 /* SearchResultsView.swift in Sources */,
@@ -227,6 +235,10 @@
 				B0010000000000000000000F /* TagAssignmentStore.swift in Sources */,
 				B00100000000000000000010 /* TagHierarchyView.swift in Sources */,
 				B00100000000000000000011 /* TagChipView.swift in Sources */,
+				B00100000000000000000012 /* APIClient.swift in Sources */,
+				B00100000000000000000013 /* KeychainStore.swift in Sources */,
+				B00100000000000000000014 /* StorageViewModel.swift in Sources */,
+				B00100000000000000000015 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

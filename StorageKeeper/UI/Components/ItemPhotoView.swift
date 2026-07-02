@@ -2,8 +2,57 @@ import AVFoundation
 import SwiftUI
 import UIKit
 
+struct RemotePhotoView: View {
+    @EnvironmentObject private var store: StorageViewModel
+
+    let photoKey: String?
+    let placeholderSystemName: String
+    var contentMode: ContentMode = .fit
+
+    @State private var image: UIImage?
+    @State private var currentKey: String?
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: contentMode)
+            } else {
+                Image(systemName: placeholderSystemName)
+                    .font(.system(size: 44, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .task(id: photoKey) {
+            await load()
+        }
+    }
+
+    private func load() async {
+        guard let photoKey, !photoKey.isEmpty else {
+            image = nil
+            currentKey = nil
+            return
+        }
+
+        guard currentKey != photoKey else {
+            return
+        }
+
+        currentKey = photoKey
+
+        do {
+            let data = try await store.photoData(for: photoKey)
+            image = UIImage(data: data)
+        } catch {
+            image = nil
+        }
+    }
+}
+
 struct ItemPhotoView: View {
-    let filename: String?
+    let photoKey: String?
     let size: CGFloat
     var cornerRadius: CGFloat = 8
 
@@ -12,16 +61,8 @@ struct ItemPhotoView: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(.secondary.opacity(0.12))
 
-            if let image = ItemImageStore.loadImage(named: filename) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(1)
-            } else {
-                Image(systemName: "photo")
-                    .font(.system(size: max(18, size * 0.34), weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
+            RemotePhotoView(photoKey: photoKey, placeholderSystemName: "photo", contentMode: .fit)
+                .padding(1)
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -33,19 +74,14 @@ struct ItemPhotoView: View {
 }
 
 struct ItemPhotoBannerView: View {
-    let filename: String?
+    let photoKey: String?
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(.secondary.opacity(0.12))
 
-            if let image = ItemImageStore.loadImage(named: filename) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(1)
-            } else {
+            if photoKey == nil {
                 VStack(spacing: 10) {
                     Image(systemName: "photo")
                         .font(.system(size: 44, weight: .medium))
@@ -54,6 +90,9 @@ struct ItemPhotoBannerView: View {
                         .font(.subheadline)
                 }
                 .foregroundStyle(.secondary)
+            } else {
+                RemotePhotoView(photoKey: photoKey, placeholderSystemName: "photo", contentMode: .fit)
+                    .padding(1)
             }
         }
         .frame(maxWidth: .infinity)

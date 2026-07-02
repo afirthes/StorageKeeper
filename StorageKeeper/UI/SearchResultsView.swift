@@ -1,26 +1,32 @@
 import SwiftUI
 
 struct SearchResultsView: View {
+    @EnvironmentObject private var store: StorageViewModel
+
     let searchText: String
-    let containers: [StorageContainer]
-    let items: [StoredItem]
-    let tags: [StorageTag]
-    let tagAssignments: [TagAssignment]
+
+    @State private var results = SearchResponse(containers: [], items: [])
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     var body: some View {
         List {
-            if matchingContainers.isEmpty && matchingItems.isEmpty {
+            if isLoading {
+                Section {
+                    ProgressView("Поиск")
+                }
+            } else if results.containers.isEmpty && results.items.isEmpty {
                 Section {
                     ContentUnavailableView(
                         "Ничего не найдено",
                         systemImage: "magnifyingglass",
-                        description: Text("Поиск идет по названиям и тегам.")
+                        description: Text("Поиск идет по названиям, описаниям и тегам.")
                     )
                 }
             } else {
-                if !matchingContainers.isEmpty {
+                if !results.containers.isEmpty {
                     Section("Контейнеры") {
-                        ForEach(matchingContainers) { container in
+                        ForEach(results.containers) { container in
                             NavigationLink {
                                 ContainerContentView(containerID: container.id)
                             } label: {
@@ -34,11 +40,11 @@ struct SearchResultsView: View {
                     }
                 }
 
-                if !matchingItems.isEmpty {
+                if !results.items.isEmpty {
                     Section("Вещи") {
-                        ForEach(matchingItems) { item in
+                        ForEach(results.items) { item in
                             NavigationLink {
-                                ItemDetailView(item: item)
+                                ItemDetailView(itemID: item.id)
                             } label: {
                                 ItemRow(item: item, footnote: locationTitle(for: item))
                             }
@@ -46,65 +52,44 @@ struct SearchResultsView: View {
                     }
                 }
             }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                }
+            }
         }
         .listStyle(.insetGrouped)
+        .task(id: searchText) {
+            await search()
+        }
     }
 
-    private var matchingContainers: [StorageContainer] {
-        containers
-            .filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                hasMatchingTag(targetID: $0.id, targetType: .container)
-            }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    private var matchingItems: [StoredItem] {
-        items
-            .filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                hasMatchingTag(targetID: $0.id, targetType: .item)
-            }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    private var matchingTagIDs: Set<UUID> {
-        let query = TagUtilities.normalizedTagName(searchText)
-
+    private func search() async {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else {
-            return []
+            results = SearchResponse(containers: [], items: [])
+            return
         }
 
-        let directTagIDs = Set(
-            tags
-                .filter {
-                    $0.name.localizedCaseInsensitiveContains(query) ||
-                    TagUtilities.path(for: $0, in: tags).localizedCaseInsensitiveContains(query)
-                }
-                .map(\.id)
-        )
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
 
-        return TagUtilities.descendantIDs(of: directTagIDs, in: tags)
-    }
-
-    private func hasMatchingTag(targetID: UUID, targetType: TagTargetType) -> Bool {
-        guard !matchingTagIDs.isEmpty else {
-            return false
-        }
-
-        return tagAssignments.contains {
-            $0.targetID == targetID &&
-            $0.targetTypeRaw == targetType.rawValue &&
-            matchingTagIDs.contains($0.tagID)
+        do {
+            results = try await store.search(query)
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
     private func childCount(for container: StorageContainer) -> Int {
-        containers.filter { $0.parentID == container.id }.count
+        store.containers.filter { $0.parentID == container.id }.count
     }
 
     private func itemCount(for container: StorageContainer) -> Int {
-        items.filter { $0.containerID == container.id }.count
+        store.items.filter { $0.containerID == container.id }.count
     }
 
     private func locationTitle(for item: StoredItem) -> String {
@@ -112,6 +97,6 @@ struct SearchResultsView: View {
             return "Без контейнера"
         }
 
-        return containers.first { $0.id == containerID }?.name ?? "Контейнер не найден"
+        return store.containers.first { $0.id == containerID }?.name ?? "Контейнер не найден"
     }
 }

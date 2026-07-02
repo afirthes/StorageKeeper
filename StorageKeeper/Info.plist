@@ -24,6 +24,11 @@
 	<string>StorageKeeper uses selected photos as pictures for your stored items.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>StorageKeeper uses the camera to photograph containers and stored items.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>

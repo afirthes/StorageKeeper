@@ -1,16 +1,14 @@
-import SwiftData
 import SwiftUI
 
 struct ItemRow: View {
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
+    @EnvironmentObject private var store: StorageViewModel
 
     let item: StoredItem
     var footnote: String?
 
     var body: some View {
         HStack(spacing: 12) {
-            ItemPhotoView(filename: item.photoFilename, size: 52)
+            ItemPhotoView(photoKey: item.photoKey, size: 52)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -48,13 +46,7 @@ struct ItemRow: View {
     }
 
     private var itemTags: [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: item.id,
-            targetType: .item,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
+        TagUtilities.selectedTags(tagIDs: item.tagIds, allTags: store.tags)
     }
 
     private var tagLine: String {
@@ -63,8 +55,7 @@ struct ItemRow: View {
 }
 
 struct ItemFeedCard: View {
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
+    @EnvironmentObject private var store: StorageViewModel
 
     let item: StoredItem
 
@@ -114,14 +105,12 @@ struct ItemFeedCard: View {
 
     @ViewBuilder
     private var photo: some View {
-        if let image = ItemImageStore.loadImage(named: item.photoFilename) {
+        if item.photoKey != nil {
             ZStack {
                 Rectangle()
                     .fill(.secondary.opacity(0.08))
 
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
+                RemotePhotoView(photoKey: item.photoKey, placeholderSystemName: "photo", contentMode: .fit)
                     .padding(1)
             }
         } else {
@@ -141,13 +130,7 @@ struct ItemFeedCard: View {
     }
 
     private var itemTags: [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: item.id,
-            targetType: .item,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
+        TagUtilities.selectedTags(tagIDs: item.tagIds, allTags: store.tags)
     }
 
     private var visibleItemTags: [StorageTag] {

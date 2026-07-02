@@ -1,13 +1,7 @@
-import SwiftData
 import SwiftUI
 
 struct ContainerContentView: View {
-    @Environment(\.modelContext) private var modelContext
-
-    @Query(sort: \StorageContainer.name, order: .forward) private var containers: [StorageContainer]
-    @Query(sort: \StoredItem.name, order: .forward) private var items: [StoredItem]
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
+    @EnvironmentObject private var store: StorageViewModel
 
     let containerID: UUID?
 
@@ -84,7 +78,7 @@ struct ContainerContentView: View {
                 Section("Вещи") {
                     ForEach(visibleItems) { item in
                         NavigationLink {
-                            ItemDetailView(item: item)
+                            ItemDetailView(itemID: item.id)
                         } label: {
                             ItemFeedCard(item: item)
                         }
@@ -94,7 +88,7 @@ struct ContainerContentView: View {
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
-                                deleteItem(item)
+                                Task { try? await store.deleteItem(item) }
                             } label: {
                                 Label("Удалить", systemImage: "trash")
                             }
@@ -113,6 +107,9 @@ struct ContainerContentView: View {
         .listStyle(.insetGrouped)
         .navigationTitle(currentContainer?.name ?? "Хранилище")
         .navigationBarTitleDisplayMode(containerID == nil ? .large : .inline)
+        .refreshable {
+            await store.reload()
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if let currentContainer {
@@ -165,7 +162,7 @@ struct ContainerContentView: View {
             presenting: containerPendingDeletion
         ) { container in
             Button("Удалить со всем содержимым", role: .destructive) {
-                deleteContainerTree(container)
+                Task { try? await store.deleteContainer(container) }
                 containerPendingDeletion = nil
             }
 
@@ -181,28 +178,25 @@ struct ContainerContentView: View {
         guard let containerID else {
             return nil
         }
-
-        return containers.first { $0.id == containerID }
+        return store.containers.first { $0.id == containerID }
     }
 
     private var childContainers: [StorageContainer] {
-        containers
+        store.containers
             .filter { $0.parentID == containerID }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     private var visibleItems: [StoredItem] {
-        items
+        store.items
             .filter { $0.containerID == containerID }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     private var emptyStateDescription: String {
-        if containerID == nil {
-            return "Создайте первый контейнер или добавьте вещь без контейнера."
-        }
-
-        return "Добавьте вложенный контейнер или вещь с фотографией."
+        containerID == nil
+            ? "Создайте первый контейнер или добавьте вещь без контейнера."
+            : "Добавьте вложенный контейнер или вещь с фотографией."
     }
 
     private var isConfirmingContainerDeletion: Binding<Bool> {
@@ -217,77 +211,15 @@ struct ContainerContentView: View {
     }
 
     private func childCount(for container: StorageContainer) -> Int {
-        containers.filter { $0.parentID == container.id }.count
+        store.containers.filter { $0.parentID == container.id }.count
     }
 
     private func itemCount(for container: StorageContainer) -> Int {
-        items.filter { $0.containerID == container.id }.count
+        store.items.filter { $0.containerID == container.id }.count
     }
 
     private func tags(for container: StorageContainer) -> [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: container.id,
-            targetType: .container,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
-    }
-
-    private func deleteItem(_ item: StoredItem) {
-        ItemImageStore.deletePhoto(named: item.photoFilename)
-        TagAssignmentStore.deleteAssignments(
-            for: item.id,
-            targetType: .item,
-            assignments: tagAssignments,
-            modelContext: modelContext
-        )
-        modelContext.delete(item)
-        try? modelContext.save()
-    }
-
-    private func deleteContainerTree(_ container: StorageContainer) {
-        var idsToDelete = Set<UUID>([container.id])
-        var foundNewChild = true
-
-        while foundNewChild {
-            foundNewChild = false
-
-            for candidate in containers {
-                guard let parentID = candidate.parentID else {
-                    continue
-                }
-
-                if idsToDelete.contains(parentID) && !idsToDelete.contains(candidate.id) {
-                    idsToDelete.insert(candidate.id)
-                    foundNewChild = true
-                }
-            }
-        }
-
-        for item in items where item.containerID.map(idsToDelete.contains) == true {
-            ItemImageStore.deletePhoto(named: item.photoFilename)
-            TagAssignmentStore.deleteAssignments(
-                for: item.id,
-                targetType: .item,
-                assignments: tagAssignments,
-                modelContext: modelContext
-            )
-            modelContext.delete(item)
-        }
-
-        for container in containers where idsToDelete.contains(container.id) {
-            ItemImageStore.deletePhoto(named: container.photoFilename)
-            TagAssignmentStore.deleteAssignments(
-                for: container.id,
-                targetType: .container,
-                assignments: tagAssignments,
-                modelContext: modelContext
-            )
-            modelContext.delete(container)
-        }
-
-        try? modelContext.save()
+        TagUtilities.selectedTags(tagIDs: container.tagIds, allTags: store.tags)
     }
 }
 

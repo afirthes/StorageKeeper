@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 enum TagHierarchyMode {
@@ -8,19 +7,16 @@ enum TagHierarchyMode {
 }
 
 struct TagHierarchyView: View {
-    let mode: TagHierarchyMode
-
-    @Binding private var selectedTagIDs: Set<UUID>
-
+    @EnvironmentObject private var store: StorageViewModel
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var assignments: [TagAssignment]
+    let mode: TagHierarchyMode
+    @Binding private var selectedTagIDs: Set<UUID>
 
     @State private var expandedTagIDs = Set<UUID>()
     @State private var editRequest: TagEditRequest?
     @State private var pendingDeletionTagID: UUID?
+    @State private var errorMessage: String?
 
     init(mode: TagHierarchyMode = .manage, selectedTagIDs: Binding<Set<UUID>> = .constant([])) {
         self.mode = mode
@@ -29,7 +25,7 @@ struct TagHierarchyView: View {
 
     var body: some View {
         List {
-            if tags.isEmpty {
+            if store.tags.isEmpty {
                 Section {
                     ContentUnavailableView(
                         "Тегов пока нет",
@@ -63,8 +59,18 @@ struct TagHierarchyView: View {
                     }
                 }
             }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                }
+            }
         }
         .navigationTitle(navigationTitle)
+        .refreshable {
+            await store.reload()
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -84,7 +90,7 @@ struct TagHierarchyView: View {
             }
         }
         .onAppear {
-            expandedTagIDs.formUnion(tags.map(\.id))
+            expandedTagIDs.formUnion(store.tags.map(\.id))
         }
         .sheet(item: $editRequest) { request in
             NavigationStack {
@@ -93,7 +99,7 @@ struct TagHierarchyView: View {
                     initialName: initialName(for: request),
                     parentTitle: parentTitle(for: request),
                     onSave: { name in
-                        saveTag(name, request: request)
+                        await saveTag(name, request: request)
                     }
                 )
             }
@@ -104,7 +110,7 @@ struct TagHierarchyView: View {
             titleVisibility: .visible
         ) {
             Button("Удалить ветку тегов", role: .destructive) {
-                deletePendingTag()
+                Task { await deletePendingTag() }
             }
 
             Button("Отмена", role: .cancel) {
@@ -120,7 +126,7 @@ struct TagHierarchyView: View {
     }
 
     private var rootTags: [StorageTag] {
-        sorted(tags.filter { $0.parentID == nil })
+        sorted(store.tags.filter { $0.parentID == nil })
     }
 
     private var navigationTitle: String {
@@ -165,7 +171,7 @@ struct TagHierarchyView: View {
     }
 
     private func children(of tag: StorageTag) -> [StorageTag] {
-        sorted(tags.filter { $0.parentID == tag.id })
+        sorted(store.tags.filter { $0.parentID == tag.id })
     }
 
     private func sorted(_ tags: [StorageTag]) -> [StorageTag] {
@@ -197,7 +203,7 @@ struct TagHierarchyView: View {
             return nil
         }
 
-        return tags.first { $0.id == id }
+        return store.tags.first { $0.id == id }
     }
 
     private func title(for request: TagEditRequest) -> String {
@@ -224,7 +230,7 @@ struct TagHierarchyView: View {
                 return nil
             }
 
-            return TagUtilities.path(for: parent, in: tags)
+            return TagUtilities.path(for: parent, in: store.tags)
 
         case .rename(let tagID):
             guard let parentID = tag(for: tagID)?.parentID,
@@ -232,11 +238,11 @@ struct TagHierarchyView: View {
                 return nil
             }
 
-            return TagUtilities.path(for: parent, in: tags)
+            return TagUtilities.path(for: parent, in: store.tags)
         }
     }
 
-    private func saveTag(_ rawName: String, request: TagEditRequest) -> String? {
+    private func saveTag(_ rawName: String, request: TagEditRequest) async -> String? {
         let name = TagUtilities.normalizedTagName(rawName)
 
         guard !name.isEmpty else {
@@ -256,7 +262,7 @@ struct TagHierarchyView: View {
             parentID = editingTag?.parentID
         }
 
-        let duplicate = tags.contains {
+        let duplicate = store.tags.contains {
             $0.id != editingTag?.id &&
             $0.parentID == parentID &&
             $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
@@ -266,48 +272,40 @@ struct TagHierarchyView: View {
             return "Такой тег уже есть в этой ветке."
         }
 
-        if let editingTag {
-            editingTag.name = name
-            editingTag.updatedAt = .now
-        } else {
-            let newTag = StorageTag(name: name, parentID: parentID)
-            modelContext.insert(newTag)
-
-            if let parentID {
-                expandedTagIDs.insert(parentID)
-            }
-
-            if mode == .selection {
-                selectedTagIDs.insert(newTag.id)
-            }
-        }
-
         do {
-            try modelContext.save()
+            if let editingTag {
+                try await store.updateTag(editingTag, name: name)
+            } else {
+                let newTag = try await store.createTag(name: name, parentID: parentID)
+
+                if let parentID {
+                    expandedTagIDs.insert(parentID)
+                }
+
+                if mode == .selection {
+                    selectedTagIDs.insert(newTag.id)
+                }
+            }
             return nil
         } catch {
             return error.localizedDescription
         }
     }
 
-    private func deletePendingTag() {
-        guard let pendingDeletionTagID else {
+    private func deletePendingTag() async {
+        guard let pendingDeletionTagID,
+              let tag = tag(for: pendingDeletionTagID) else {
             return
         }
 
-        let tagIDs = TagUtilities.descendantIDs(of: [pendingDeletionTagID], in: tags)
-
-        for assignment in assignments where tagIDs.contains(assignment.tagID) {
-            modelContext.delete(assignment)
+        do {
+            let tagIDs = TagUtilities.descendantIDs(of: [pendingDeletionTagID], in: store.tags)
+            try await store.deleteTag(tag)
+            selectedTagIDs.subtract(tagIDs)
+            self.pendingDeletionTagID = nil
+        } catch {
+            errorMessage = error.localizedDescription
         }
-
-        for tag in tags where tagIDs.contains(tag.id) {
-            modelContext.delete(tag)
-        }
-
-        selectedTagIDs.subtract(tagIDs)
-        self.pendingDeletionTagID = nil
-        try? modelContext.save()
     }
 }
 
@@ -444,18 +442,19 @@ private struct TagEditSheet: View {
     let title: String
     let initialName: String
     let parentTitle: String?
-    let onSave: (String) -> String?
+    let onSave: (String) async -> String?
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var name: String
     @State private var errorMessage: String?
+    @State private var isSaving = false
 
     init(
         title: String,
         initialName: String,
         parentTitle: String?,
-        onSave: @escaping (String) -> String?
+        onSave: @escaping (String) async -> String?
     ) {
         self.title = title
         self.initialName = initialName
@@ -493,16 +492,19 @@ private struct TagEditSheet: View {
             }
 
             ToolbarItem(placement: .confirmationAction) {
-                Button("Сохранить") {
-                    save()
+                Button(isSaving ? "Сохранение" : "Сохранить") {
+                    Task { await save() }
                 }
-                .disabled(TagUtilities.normalizedTagName(name).isEmpty)
+                .disabled(TagUtilities.normalizedTagName(name).isEmpty || isSaving)
             }
         }
     }
 
-    private func save() {
-        if let error = onSave(name) {
+    private func save() async {
+        isSaving = true
+        defer { isSaving = false }
+
+        if let error = await onSave(name) {
             errorMessage = error
             return
         }

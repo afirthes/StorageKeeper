@@ -1,28 +1,20 @@
-import SwiftData
 import SwiftUI
 
 struct RootView: View {
-    @Query(sort: \StorageContainer.name, order: .forward) private var containers: [StorageContainer]
-    @Query(sort: \StoredItem.name, order: .forward) private var items: [StoredItem]
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
-
+    @EnvironmentObject private var store: StorageViewModel
     @State private var searchText = ""
+    @State private var selectedTab: AppTab = .storage
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 Group {
-                    if trimmedSearchText.isEmpty {
+                    if !store.isAuthenticated {
+                        ConnectionRequiredView()
+                    } else if trimmedSearchText.isEmpty {
                         ContainerContentView(containerID: nil)
                     } else {
-                        SearchResultsView(
-                            searchText: trimmedSearchText,
-                            containers: containers,
-                            items: items,
-                            tags: tags,
-                            tagAssignments: tagAssignments
-                        )
+                        SearchResultsView(searchText: trimmedSearchText)
                     }
                 }
                 .navigationTitle(trimmedSearchText.isEmpty ? "Хранилище" : "Поиск")
@@ -35,17 +27,61 @@ struct RootView: View {
             .tabItem {
                 Label("Хранилище", systemImage: "archivebox")
             }
+            .tag(AppTab.storage)
 
             NavigationStack {
-                TagHierarchyView()
+                if store.isAuthenticated {
+                    TagHierarchyView()
+                } else {
+                    ConnectionRequiredView()
+                        .navigationTitle("Теги")
+                }
             }
             .tabItem {
                 Label("Теги", systemImage: "tag")
+            }
+            .tag(AppTab.tags)
+
+            NavigationStack {
+                SettingsView {
+                    selectedTab = .storage
+                }
+            }
+            .tabItem {
+                Label("Настройки", systemImage: "gearshape")
+            }
+            .tag(AppTab.settings)
+        }
+        .overlay(alignment: .top) {
+            if let errorMessage = store.errorMessage, store.isAuthenticated {
+                Text(errorMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(.red.gradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .padding()
             }
         }
     }
 
     private var trimmedSearchText: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private enum AppTab: Hashable {
+    case storage
+    case tags
+    case settings
+}
+
+private struct ConnectionRequiredView: View {
+    var body: some View {
+        ContentUnavailableView(
+            "Подключите сервер",
+            systemImage: "network",
+            description: Text("Откройте настройки, укажите адрес сервера, логин и пароль.")
+        )
     }
 }

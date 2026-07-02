@@ -1,28 +1,24 @@
 import PhotosUI
-import SwiftData
 import SwiftUI
 import UIKit
 
 struct ContainerEditorView: View {
+    @EnvironmentObject private var store: StorageViewModel
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
 
     private let container: StorageContainer?
     private let parentID: UUID?
 
     @State private var name: String
     @State private var details: String
-    @State private var photoFilename: String?
+    @State private var photoKey: String?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedPhotoData: Data?
     @State private var cropRequest: PhotoCropRequest?
     @State private var isShowingCamera = false
-    @State private var selectedTagIDs = Set<UUID>()
-    @State private var didLoadTags = false
+    @State private var selectedTagIDs: Set<UUID>
     @State private var isShowingTagPicker = false
+    @State private var isSaving = false
     @State private var errorMessage: String?
 
     init(container: StorageContainer? = nil, parentID: UUID?) {
@@ -30,7 +26,8 @@ struct ContainerEditorView: View {
         self.parentID = parentID
         _name = State(initialValue: container?.name ?? "")
         _details = State(initialValue: container?.details ?? "")
-        _photoFilename = State(initialValue: container?.photoFilename)
+        _photoKey = State(initialValue: container?.photoKey)
+        _selectedTagIDs = State(initialValue: container?.tagIds ?? [])
     }
 
     var body: some View {
@@ -57,11 +54,11 @@ struct ContainerEditorView: View {
                         }
                     }
 
-                    if photoFilename != nil || selectedPhotoData != nil {
+                    if photoKey != nil || selectedPhotoData != nil {
                         Button("Удалить фото", role: .destructive) {
                             selectedPhotoData = nil
                             selectedPhotoItem = nil
-                            photoFilename = nil
+                            photoKey = nil
                         }
                     }
                 }
@@ -86,9 +83,6 @@ struct ContainerEditorView: View {
             }
             .navigationTitle(container == nil ? "Новый контейнер" : "Контейнер")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                loadSelectedTagsIfNeeded()
-            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") {
@@ -97,10 +91,10 @@ struct ContainerEditorView: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Сохранить") {
-                        save()
+                    Button(isSaving ? "Сохранение" : "Сохранить") {
+                        Task { await save() }
                     }
-                    .disabled(trimmedName.isEmpty)
+                    .disabled(trimmedName.isEmpty || isSaving)
                 }
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
@@ -116,6 +110,7 @@ struct ContainerEditorView: View {
             .sheet(item: $cropRequest) { request in
                 SquarePhotoCropEditorView(sourceImage: request.image) { croppedData in
                     selectedPhotoData = croppedData
+                    photoKey = nil
                 }
             }
             .sheet(isPresented: $isShowingTagPicker) {
@@ -140,11 +135,11 @@ struct ContainerEditorView: View {
                let image = UIImage(data: selectedPhotoData) {
                 Image(uiImage: image)
                     .resizable()
-                    .scaledToFill()
-            } else if let image = ItemImageStore.loadImage(named: photoFilename) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
+                    .padding(1)
+            } else if photoKey != nil {
+                RemotePhotoView(photoKey: photoKey, placeholderSystemName: "shippingbox.fill", contentMode: .fit)
+                    .padding(1)
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "shippingbox.fill")
@@ -165,7 +160,7 @@ struct ContainerEditorView: View {
     }
 
     private var selectedTagsView: some View {
-        let selectedTags = TagUtilities.selectedTags(tagIDs: selectedTagIDs, allTags: tags)
+        let selectedTags = TagUtilities.selectedTags(tagIDs: selectedTagIDs, allTags: store.tags)
 
         return Group {
             if selectedTags.isEmpty {
@@ -232,72 +227,30 @@ struct ContainerEditorView: View {
         }
     }
 
-    private func loadSelectedTagsIfNeeded() {
-        guard !didLoadTags else {
-            return
-        }
+    private func save() async {
+        isSaving = true
+        defer { isSaving = false }
 
-        didLoadTags = true
-
-        guard let container else {
-            return
-        }
-
-        selectedTagIDs = TagAssignmentStore.tagIDs(
-            for: container.id,
-            targetType: .container,
-            assignments: tagAssignments
-        )
-    }
-
-    private func save() {
         do {
-            var finalPhotoFilename = photoFilename
-
-            if let selectedPhotoData {
-                finalPhotoFilename = try ItemImageStore.savePhotoData(
-                    selectedPhotoData,
-                    replacing: photoFilename
-                )
-            }
-
             if let container {
-                let oldPhotoFilename = container.photoFilename
-
-                container.name = trimmedName
-                container.details = trimmedDetails
-                container.photoFilename = finalPhotoFilename
-                container.updatedAt = .now
-
-                if oldPhotoFilename != finalPhotoFilename {
-                    ItemImageStore.deletePhoto(named: oldPhotoFilename)
-                }
-
-                TagAssignmentStore.sync(
-                    targetID: container.id,
-                    targetType: .container,
-                    selectedTagIDs: selectedTagIDs,
-                    assignments: tagAssignments,
-                    modelContext: modelContext
-                )
-            } else {
-                let newContainer = StorageContainer(
+                try await store.updateContainer(
+                    container,
                     name: trimmedName,
                     details: trimmedDetails,
-                    photoFilename: finalPhotoFilename,
-                    parentID: parentID
+                    photoData: selectedPhotoData,
+                    removePhoto: photoKey == nil && container.photoKey != nil && selectedPhotoData == nil,
+                    tagIDs: selectedTagIDs
                 )
-                modelContext.insert(newContainer)
-                TagAssignmentStore.sync(
-                    targetID: newContainer.id,
-                    targetType: .container,
-                    selectedTagIDs: selectedTagIDs,
-                    assignments: tagAssignments,
-                    modelContext: modelContext
+            } else {
+                try await store.createContainer(
+                    name: trimmedName,
+                    details: trimmedDetails,
+                    parentID: parentID,
+                    photoData: selectedPhotoData,
+                    tagIDs: selectedTagIDs
                 )
             }
 
-            try modelContext.save()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

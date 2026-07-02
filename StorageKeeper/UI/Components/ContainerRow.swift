@@ -1,9 +1,7 @@
-import SwiftData
 import SwiftUI
 
 struct ContainerRow: View {
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
+    @EnvironmentObject private var store: StorageViewModel
 
     let container: StorageContainer
     let childCount: Int
@@ -11,11 +9,7 @@ struct ContainerRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "shippingbox.fill")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48)
-                .background(.teal.gradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            ItemPhotoView(photoKey: container.photoKey, size: 52)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(container.name)
@@ -40,13 +34,7 @@ struct ContainerRow: View {
     }
 
     private var containerTags: [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: container.id,
-            targetType: .container,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
+        TagUtilities.selectedTags(tagIDs: container.tagIds, allTags: store.tags)
     }
 
     private var tagLine: String {
@@ -55,8 +43,7 @@ struct ContainerRow: View {
 }
 
 struct ContainerFeedCard: View {
-    @Query(sort: \StorageTag.name, order: .forward) private var tags: [StorageTag]
-    @Query private var tagAssignments: [TagAssignment]
+    @EnvironmentObject private var store: StorageViewModel
 
     let container: StorageContainer
     let childCount: Int
@@ -106,14 +93,12 @@ struct ContainerFeedCard: View {
 
     @ViewBuilder
     private var photo: some View {
-        if let image = ItemImageStore.loadImage(named: container.photoFilename) {
+        if container.photoKey != nil {
             ZStack {
                 Rectangle()
                     .fill(.secondary.opacity(0.08))
 
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
+                RemotePhotoView(photoKey: container.photoKey, placeholderSystemName: "shippingbox.fill", contentMode: .fit)
                     .padding(1)
             }
         } else {
@@ -129,17 +114,7 @@ struct ContainerFeedCard: View {
     }
 
     private var containerTags: [StorageTag] {
-        let tagIDs = TagAssignmentStore.tagIDs(
-            for: container.id,
-            targetType: .container,
-            assignments: tagAssignments
-        )
-
-        return TagUtilities.selectedTags(tagIDs: tagIDs, allTags: tags)
-    }
-
-    private var tagLine: String {
-        TagUtilities.compactTagLine(containerTags, limit: 4)
+        TagUtilities.selectedTags(tagIDs: container.tagIds, allTags: store.tags)
     }
 
     private var visibleContainerTags: [StorageTag] {
