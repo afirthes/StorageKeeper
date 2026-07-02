@@ -34,6 +34,7 @@ final class StorageViewModel: ObservableObject {
 
     private let defaults = UserDefaults.standard
     private let api = APIClient()
+    private let photoCache = PhotoCache.shared
     private var accessToken: String? {
         didSet {
             api.accessToken = accessToken
@@ -54,6 +55,7 @@ final class StorageViewModel: ObservableObject {
         api.accessToken = accessToken
 
         Task {
+            try? await photoCache.pruneIfNeeded()
             await bootstrap()
         }
     }
@@ -152,8 +154,15 @@ final class StorageViewModel: ObservableObject {
     }
 
     func photoData(for key: String) async throws -> Data {
-        try await authenticated {
-            try await self.api.photoData(for: key)
+        let cacheKey = photoCacheKey(for: key)
+        if let cachedData = await photoCache.data(for: cacheKey) {
+            return cachedData
+        }
+
+        return try await authenticated {
+            let data = try await self.api.photoData(for: key)
+            await self.photoCache.store(data, for: cacheKey)
+            return data
         }
     }
 
@@ -176,6 +185,7 @@ final class StorageViewModel: ObservableObject {
     func updateContainer(_ container: StorageContainer, name: String, details: String, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
             let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "containers")
+            let removedPhotoKeys = Set(container.displayPhotoKeys).subtracting(photoPayload.photoKeys)
 
             let _: StorageContainer = try await self.api.patch("/containers/\(container.id.uuidString)", body: ContainerPatchRequest(
                 name: name,
@@ -186,6 +196,7 @@ final class StorageViewModel: ObservableObject {
                 primaryPhotoKey: photoPayload.primaryPhotoKey
             ))
             let _: StorageContainer = try await self.api.put("/containers/\(container.id.uuidString)/tags", body: TagAssignmentRequest(tagIds: tagIDs))
+            await self.removeCachedPhotos(removedPhotoKeys)
             try await self.refreshData()
         }
     }
@@ -207,8 +218,11 @@ final class StorageViewModel: ObservableObject {
     }
 
     func deleteContainer(_ container: StorageContainer) async throws {
+        let removedPhotoKeys = photoKeysInContainerTree(container.id)
+
         try await authenticated {
             try await self.api.delete("/containers/\(container.id.uuidString)")
+            await self.removeCachedPhotos(removedPhotoKeys)
             try await self.refreshData()
         }
     }
@@ -232,6 +246,7 @@ final class StorageViewModel: ObservableObject {
     func updateItem(_ item: StoredItem, name: String, description: String, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
             let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "items")
+            let removedPhotoKeys = Set(item.displayPhotoKeys).subtracting(photoPayload.photoKeys)
 
             let _: StoredItem = try await self.api.patch("/items/\(item.id.uuidString)", body: ItemPatchRequest(
                 name: name,
@@ -242,6 +257,7 @@ final class StorageViewModel: ObservableObject {
                 primaryPhotoKey: photoPayload.primaryPhotoKey
             ))
             let _: StoredItem = try await self.api.put("/items/\(item.id.uuidString)/tags", body: TagAssignmentRequest(tagIds: tagIDs))
+            await self.removeCachedPhotos(removedPhotoKeys)
             try await self.refreshData()
         }
     }
@@ -263,8 +279,11 @@ final class StorageViewModel: ObservableObject {
     }
 
     func deleteItem(_ item: StoredItem) async throws {
+        let removedPhotoKeys = Set(item.displayPhotoKeys)
+
         try await authenticated {
             try await self.api.delete("/items/\(item.id.uuidString)")
+            await self.removeCachedPhotos(removedPhotoKeys)
             try await self.refreshData()
         }
     }
@@ -296,7 +315,9 @@ final class StorageViewModel: ObservableObject {
 
         for photo in photos {
             if let data = photo.data {
-                uploaded.append((photo.id, try await api.uploadPhoto(data, folder: folder).key))
+                let response = try await api.uploadPhoto(data, folder: folder)
+                await photoCache.store(data, for: photoCacheKey(for: response.key))
+                uploaded.append((photo.id, response.key))
             } else if let photoKey = photo.photoKey, !photoKey.isEmpty {
                 uploaded.append((photo.id, photoKey))
             }
@@ -309,6 +330,47 @@ final class StorageViewModel: ObservableObject {
 
     private static func photoKeys(_ keys: [String], movingFirst primaryKey: String) -> [String] {
         [primaryKey] + keys.filter { $0 != primaryKey }
+    }
+
+    private func photoCacheKey(for key: String) -> String {
+        "\(normalizedServerURLForCache())|\(key)"
+    }
+
+    private func normalizedServerURLForCache() -> String {
+        serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .lowercased()
+    }
+
+    private func removeCachedPhotos(_ keys: Set<String>) async {
+        await photoCache.remove(keys: keys.map { photoCacheKey(for: $0) })
+    }
+
+    private func photoKeysInContainerTree(_ rootID: UUID) -> Set<String> {
+        let containerIDs = collectContainerTreeIDs(rootID)
+        let containerPhotoKeys = containers
+            .filter { containerIDs.contains($0.id) }
+            .flatMap(\.displayPhotoKeys)
+        let itemPhotoKeys = items
+            .filter { item in item.containerID.map { containerIDs.contains($0) } ?? false }
+            .flatMap(\.displayPhotoKeys)
+
+        return Set(containerPhotoKeys + itemPhotoKeys)
+    }
+
+    private func collectContainerTreeIDs(_ rootID: UUID) -> Set<UUID> {
+        var result = Set<UUID>()
+        var stack = [rootID]
+
+        while let currentID = stack.popLast() {
+            guard result.insert(currentID).inserted else {
+                continue
+            }
+
+            stack.append(contentsOf: containers.filter { $0.parentID == currentID }.map(\.id))
+        }
+
+        return result
     }
 
     private func authenticated<T>(_ operation: () async throws -> T) async throws -> T {

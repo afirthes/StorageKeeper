@@ -38,14 +38,20 @@ struct RemotePhotoView: View {
             return
         }
 
-        guard currentKey != photoKey else {
+        guard currentKey != photoKey || image == nil else {
             return
         }
 
+        if currentKey != photoKey {
+            image = nil
+        }
         currentKey = photoKey
 
         do {
             let data = try await store.photoData(for: photoKey)
+            guard currentKey == photoKey else {
+                return
+            }
             image = UIImage(data: data)
         } catch {
             image = nil

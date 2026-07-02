@@ -27,6 +27,7 @@
 		B00100000000000000000013 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000016 /* KeychainStore.swift */; };
 		B00100000000000000000014 /* StorageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000017 /* StorageViewModel.swift */; };
 		B00100000000000000000015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000018 /* SettingsView.swift */; };
+		B00100000000000000000016 /* PhotoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000019 /* PhotoCache.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		B00200000000000000000016 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		B00200000000000000000017 /* StorageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageViewModel.swift; sourceTree = "<group>"; };
 		B00200000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B00200000000000000000019 /* PhotoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCache.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				B00200000000000000000012 /* TagAssignmentStore.swift */,
 				B00200000000000000000015 /* APIClient.swift */,
 				B00200000000000000000016 /* KeychainStore.swift */,
+				B00200000000000000000019 /* PhotoCache.swift */,
 				B00200000000000000000017 /* StorageViewModel.swift */,
 			);
 			path = Services;
@@ -237,6 +240,7 @@
 				B00100000000000000000011 /* TagChipView.swift in Sources */,
 				B00100000000000000000012 /* APIClient.swift in Sources */,
 				B00100000000000000000013 /* KeychainStore.swift in Sources */,
+				B00100000000000000000016 /* PhotoCache.swift in Sources */,
 				B00100000000000000000014 /* StorageViewModel.swift in Sources */,
 				B00100000000000000000015 /* SettingsView.swift in Sources */,
 			);
