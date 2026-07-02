@@ -1,0 +1,416 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B00100000000000000000001 /* StorageKeeperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000001 /* StorageKeeperApp.swift */; };
+		B00100000000000000000002 /* StorageContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000002 /* StorageContainer.swift */; };
+		B00100000000000000000003 /* StoredItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000003 /* StoredItem.swift */; };
+		B00100000000000000000004 /* ItemImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000004 /* ItemImageStore.swift */; };
+		B00100000000000000000005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000005 /* RootView.swift */; };
+		B00100000000000000000006 /* ContainerContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000006 /* ContainerContentView.swift */; };
+		B00100000000000000000007 /* SearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000007 /* SearchResultsView.swift */; };
+		B00100000000000000000008 /* ItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000008 /* ItemDetailView.swift */; };
+		B00100000000000000000009 /* ContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000009 /* ContainerRow.swift */; };
+		B0010000000000000000000A /* ItemRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0020000000000000000000A /* ItemRow.swift */; };
+		B0010000000000000000000B /* ItemPhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0020000000000000000000B /* ItemPhotoView.swift */; };
+		B0010000000000000000000C /* ContainerEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0020000000000000000000C /* ContainerEditorView.swift */; };
+		B0010000000000000000000D /* ItemEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0020000000000000000000D /* ItemEditorView.swift */; };
+		B0010000000000000000000E /* StorageTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000011 /* StorageTag.swift */; };
+		B0010000000000000000000F /* TagAssignmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000012 /* TagAssignmentStore.swift */; };
+		B00100000000000000000010 /* TagHierarchyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000013 /* TagHierarchyView.swift */; };
+		B00100000000000000000011 /* TagChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00200000000000000000014 /* TagChipView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B00200000000000000000001 /* StorageKeeperApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageKeeperApp.swift; sourceTree = "<group>"; };
+		B00200000000000000000002 /* StorageContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageContainer.swift; sourceTree = "<group>"; };
+		B00200000000000000000003 /* StoredItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredItem.swift; sourceTree = "<group>"; };
+		B00200000000000000000004 /* ItemImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemImageStore.swift; sourceTree = "<group>"; };
+		B00200000000000000000005 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		B00200000000000000000006 /* ContainerContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerContentView.swift; sourceTree = "<group>"; };
+		B00200000000000000000007 /* SearchResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsView.swift; sourceTree = "<group>"; };
+		B00200000000000000000008 /* ItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemDetailView.swift; sourceTree = "<group>"; };
+		B00200000000000000000009 /* ContainerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerRow.swift; sourceTree = "<group>"; };
+		B0020000000000000000000A /* ItemRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRow.swift; sourceTree = "<group>"; };
+		B0020000000000000000000B /* ItemPhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemPhotoView.swift; sourceTree = "<group>"; };
+		B0020000000000000000000C /* ContainerEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerEditorView.swift; sourceTree = "<group>"; };
+		B0020000000000000000000D /* ItemEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemEditorView.swift; sourceTree = "<group>"; };
+		B0020000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B0020000000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B00200000000000000000010 /* StorageKeeper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StorageKeeper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00200000000000000000011 /* StorageTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageTag.swift; sourceTree = "<group>"; };
+		B00200000000000000000012 /* TagAssignmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagAssignmentStore.swift; sourceTree = "<group>"; };
+		B00200000000000000000013 /* TagHierarchyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagHierarchyView.swift; sourceTree = "<group>"; };
+		B00200000000000000000014 /* TagChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChipView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B00300000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B00400000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				B00400000000000000000002 /* StorageKeeper */,
+				B00400000000000000000008 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B00400000000000000000002 /* StorageKeeper */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000001 /* StorageKeeperApp.swift */,
+				B00400000000000000000003 /* Models */,
+				B00400000000000000000004 /* Services */,
+				B00400000000000000000005 /* UI */,
+				B0020000000000000000000F /* Assets.xcassets */,
+				B0020000000000000000000E /* Info.plist */,
+			);
+			path = StorageKeeper;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000002 /* StorageContainer.swift */,
+				B00200000000000000000003 /* StoredItem.swift */,
+				B00200000000000000000011 /* StorageTag.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000004 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000004 /* ItemImageStore.swift */,
+				B00200000000000000000012 /* TagAssignmentStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000005 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000005 /* RootView.swift */,
+				B00200000000000000000006 /* ContainerContentView.swift */,
+				B00200000000000000000007 /* SearchResultsView.swift */,
+				B00200000000000000000008 /* ItemDetailView.swift */,
+				B00200000000000000000013 /* TagHierarchyView.swift */,
+				B00400000000000000000006 /* Components */,
+				B00400000000000000000007 /* Editors */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000006 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000009 /* ContainerRow.swift */,
+				B0020000000000000000000A /* ItemRow.swift */,
+				B0020000000000000000000B /* ItemPhotoView.swift */,
+				B00200000000000000000014 /* TagChipView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000007 /* Editors */ = {
+			isa = PBXGroup;
+			children = (
+				B0020000000000000000000C /* ContainerEditorView.swift */,
+				B0020000000000000000000D /* ItemEditorView.swift */,
+			);
+			path = Editors;
+			sourceTree = "<group>";
+		};
+		B00400000000000000000008 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B00200000000000000000010 /* StorageKeeper.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B00500000000000000000001 /* StorageKeeper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B00800000000000000000003 /* Build configuration list for PBXNativeTarget "StorageKeeper" */;
+			buildPhases = (
+				B00600000000000000000001 /* Sources */,
+				B00300000000000000000001 /* Frameworks */,
+				B00600000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StorageKeeper;
+			productName = StorageKeeper;
+			productReference = B00200000000000000000010 /* StorageKeeper.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B00700000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					B00500000000000000000001 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = B00800000000000000000001 /* Build configuration list for PBXProject "StorageKeeper" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B00400000000000000000001;
+			productRefGroup = B00400000000000000000008 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B00500000000000000000001 /* StorageKeeper */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B00600000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B00600000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00100000000000000000001 /* StorageKeeperApp.swift in Sources */,
+				B00100000000000000000002 /* StorageContainer.swift in Sources */,
+				B00100000000000000000003 /* StoredItem.swift in Sources */,
+				B00100000000000000000004 /* ItemImageStore.swift in Sources */,
+				B00100000000000000000005 /* RootView.swift in Sources */,
+				B00100000000000000000006 /* ContainerContentView.swift in Sources */,
+				B00100000000000000000007 /* SearchResultsView.swift in Sources */,
+				B00100000000000000000008 /* ItemDetailView.swift in Sources */,
+				B00100000000000000000009 /* ContainerRow.swift in Sources */,
+				B0010000000000000000000A /* ItemRow.swift in Sources */,
+				B0010000000000000000000B /* ItemPhotoView.swift in Sources */,
+				B0010000000000000000000C /* ContainerEditorView.swift in Sources */,
+				B0010000000000000000000D /* ItemEditorView.swift in Sources */,
+				B0010000000000000000000E /* StorageTag.swift in Sources */,
+				B0010000000000000000000F /* TagAssignmentStore.swift in Sources */,
+				B00100000000000000000010 /* TagHierarchyView.swift in Sources */,
+				B00100000000000000000011 /* TagChipView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		B00900000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B00900000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B00900000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QQ5FDJWTRX;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = StorageKeeper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.windwail.KeepStorage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B00900000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QQ5FDJWTRX;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = StorageKeeper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.windwail.KeepStorage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B00800000000000000000001 /* Build configuration list for PBXProject "StorageKeeper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B00900000000000000000001 /* Debug */,
+				B00900000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B00800000000000000000003 /* Build configuration list for PBXNativeTarget "StorageKeeper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B00900000000000000000003 /* Debug */,
+				B00900000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B00700000000000000000001 /* Project object */;
+}
