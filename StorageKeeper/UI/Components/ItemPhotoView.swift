@@ -18,12 +18,14 @@ struct RemotePhotoView: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 Image(systemName: placeholderSystemName)
                     .font(.system(size: 44, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: photoKey) {
             await load()
         }
@@ -92,18 +94,25 @@ struct PhotoGalleryBannerView: View {
                 }
                 .foregroundStyle(.secondary)
             } else {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 0) {
-                        ForEach(photoKeys, id: \.self) { photoKey in
-                            RemotePhotoView(photoKey: photoKey, placeholderSystemName: placeholderSystemName, contentMode: .fit)
-                                .padding(1)
-                                .containerRelativeFrame(.horizontal)
+                GeometryReader { proxy in
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 0) {
+                            ForEach(photoKeys, id: \.self) { photoKey in
+                                ZStack {
+                                    Rectangle()
+                                        .fill(.secondary.opacity(0.08))
+
+                                    RemotePhotoView(photoKey: photoKey, placeholderSystemName: placeholderSystemName, contentMode: .fit)
+                                        .padding(1)
+                                }
+                                .frame(width: proxy.size.width, height: proxy.size.height)
+                            }
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
+                    .scrollTargetBehavior(.paging)
+                    .scrollIndicators(.hidden)
                 }
-                .scrollTargetBehavior(.paging)
-                .scrollIndicators(.hidden)
                 .background(.secondary.opacity(0.08))
             }
         }
