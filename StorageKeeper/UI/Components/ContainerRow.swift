@@ -9,7 +9,7 @@ struct ContainerRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ItemPhotoView(photoKey: container.photoKey, size: 52)
+            ItemPhotoView(photoKey: container.primaryDisplayPhotoKey, size: 52)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(container.name)
@@ -93,14 +93,8 @@ struct ContainerFeedCard: View {
 
     @ViewBuilder
     private var photo: some View {
-        if container.photoKey != nil {
-            ZStack {
-                Rectangle()
-                    .fill(.secondary.opacity(0.08))
-
-                RemotePhotoView(photoKey: container.photoKey, placeholderSystemName: "shippingbox.fill", contentMode: .fit)
-                    .padding(1)
-            }
+        if !container.displayPhotoKeys.isEmpty {
+            PhotoGalleryBannerView(photoKeys: container.displayPhotoKeys, placeholderSystemName: "shippingbox.fill")
         } else {
             ZStack {
                 Rectangle()

@@ -73,6 +73,50 @@ struct ItemPhotoView: View {
     }
 }
 
+struct PhotoGalleryBannerView: View {
+    let photoKeys: [String]
+    let placeholderSystemName: String
+
+    var body: some View {
+        ZStack {
+            if photoKeys.isEmpty {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(.secondary.opacity(0.12))
+
+                VStack(spacing: 10) {
+                    Image(systemName: placeholderSystemName)
+                        .font(.system(size: 44, weight: .medium))
+
+                    Text("Фото не добавлено")
+                        .font(.subheadline)
+                }
+                .foregroundStyle(.secondary)
+            } else {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(photoKeys, id: \.self) { photoKey in
+                            RemotePhotoView(photoKey: photoKey, placeholderSystemName: placeholderSystemName, contentMode: .fit)
+                                .padding(1)
+                                .containerRelativeFrame(.horizontal)
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.hidden)
+                .background(.secondary.opacity(0.08))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.secondary.opacity(0.16), lineWidth: 1)
+        }
+    }
+}
+
 struct ItemPhotoBannerView: View {
     let photoKey: String?
 
@@ -101,6 +145,110 @@ struct ItemPhotoBannerView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(.secondary.opacity(0.16), lineWidth: 1)
+        }
+    }
+}
+
+struct EditablePhotoGalleryView: View {
+    @Binding var photos: [PhotoDraftPayload]
+    @Binding var primaryPhotoID: UUID?
+
+    let placeholderSystemName: String
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 12) {
+                if photos.isEmpty {
+                    emptyPreview
+                } else {
+                    ForEach(photos) { photo in
+                        editablePhoto(photo)
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .scrollIndicators(.visible)
+    }
+
+    private var resolvedPrimaryPhotoID: UUID? {
+        if let primaryPhotoID, photos.contains(where: { $0.id == primaryPhotoID }) {
+            return primaryPhotoID
+        }
+        return photos.first?.id
+    }
+
+    private var emptyPreview: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(.secondary.opacity(0.12))
+            .frame(width: 180, height: 180)
+            .overlay {
+                VStack(spacing: 8) {
+                    Image(systemName: placeholderSystemName)
+                        .font(.system(size: 34, weight: .semibold))
+                    Text("Фото")
+                        .font(.subheadline)
+                }
+                .foregroundStyle(.secondary)
+            }
+    }
+
+    private func editablePhoto(_ photo: PhotoDraftPayload) -> some View {
+        ZStack(alignment: .topTrailing) {
+            photoContent(photo)
+                .frame(width: 180, height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(.secondary.opacity(0.16), lineWidth: 1)
+                }
+
+            Button {
+                primaryPhotoID = photo.id
+            } label: {
+                Image(systemName: resolvedPrimaryPhotoID == photo.id ? "heart.fill" : "heart")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(resolvedPrimaryPhotoID == photo.id ? .pink : .white)
+                    .frame(width: 34, height: 34)
+                    .background(.black.opacity(0.52), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(8)
+
+            Button(role: .destructive) {
+                remove(photo)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(.black.opacity(0.52), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(8)
+        }
+    }
+
+    @ViewBuilder
+    private func photoContent(_ photo: PhotoDraftPayload) -> some View {
+        if let data = photo.data, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.secondary.opacity(0.08))
+        } else {
+            RemotePhotoView(photoKey: photo.photoKey, placeholderSystemName: placeholderSystemName, contentMode: .fit)
+                .padding(1)
+                .background(.secondary.opacity(0.08))
+        }
+    }
+
+    private func remove(_ photo: PhotoDraftPayload) {
+        photos.removeAll { $0.id == photo.id }
+        if primaryPhotoID == photo.id {
+            primaryPhotoID = photos.first?.id
         }
     }
 }

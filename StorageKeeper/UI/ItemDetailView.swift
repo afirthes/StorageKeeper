@@ -16,7 +16,7 @@ struct ItemDetailView: View {
             if let item {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        ItemPhotoBannerView(photoKey: item.photoKey)
+                        PhotoGalleryBannerView(photoKeys: item.displayPhotoKeys, placeholderSystemName: "photo")
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text(item.name)

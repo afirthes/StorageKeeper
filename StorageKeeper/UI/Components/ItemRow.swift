@@ -8,7 +8,7 @@ struct ItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ItemPhotoView(photoKey: item.photoKey, size: 52)
+            ItemPhotoView(photoKey: item.primaryDisplayPhotoKey, size: 52)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -105,14 +105,8 @@ struct ItemFeedCard: View {
 
     @ViewBuilder
     private var photo: some View {
-        if item.photoKey != nil {
-            ZStack {
-                Rectangle()
-                    .fill(.secondary.opacity(0.08))
-
-                RemotePhotoView(photoKey: item.photoKey, placeholderSystemName: "photo", contentMode: .fit)
-                    .padding(1)
-            }
+        if !item.displayPhotoKeys.isEmpty {
+            PhotoGalleryBannerView(photoKeys: item.displayPhotoKeys, placeholderSystemName: "photo")
         } else {
             ZStack {
                 Rectangle()

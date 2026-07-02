@@ -11,9 +11,9 @@ struct ContainerEditorView: View {
 
     @State private var name: String
     @State private var details: String
-    @State private var photoKey: String?
+    @State private var photos: [PhotoDraftPayload]
+    @State private var primaryPhotoID: UUID?
     @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var selectedPhotoData: Data?
     @State private var cropRequest: PhotoCropRequest?
     @State private var isShowingCamera = false
     @State private var selectedTagIDs: Set<UUID>
@@ -26,7 +26,9 @@ struct ContainerEditorView: View {
         self.parentID = parentID
         _name = State(initialValue: container?.name ?? "")
         _details = State(initialValue: container?.details ?? "")
-        _photoKey = State(initialValue: container?.photoKey)
+        let initialPhotos = container?.displayPhotoKeys.map { PhotoDraftPayload(photoKey: $0) } ?? []
+        _photos = State(initialValue: initialPhotos)
+        _primaryPhotoID = State(initialValue: initialPhotos.first { $0.photoKey == container?.primaryDisplayPhotoKey }?.id ?? initialPhotos.first?.id)
         _selectedTagIDs = State(initialValue: container?.tagIds ?? [])
     }
 
@@ -34,7 +36,11 @@ struct ContainerEditorView: View {
         NavigationStack {
             Form {
                 Section("Фото") {
-                    photoPreview
+                    EditablePhotoGalleryView(
+                        photos: $photos,
+                        primaryPhotoID: $primaryPhotoID,
+                        placeholderSystemName: "shippingbox.fill"
+                    )
 
                     Button {
                         if CameraCaptureView.isAvailable {
@@ -54,11 +60,11 @@ struct ContainerEditorView: View {
                         }
                     }
 
-                    if photoKey != nil || selectedPhotoData != nil {
-                        Button("Удалить фото", role: .destructive) {
-                            selectedPhotoData = nil
+                    if !photos.isEmpty {
+                        Button("Удалить все фото", role: .destructive) {
+                            photos = []
                             selectedPhotoItem = nil
-                            photoKey = nil
+                            primaryPhotoID = nil
                         }
                     }
                 }
@@ -109,8 +115,7 @@ struct ContainerEditorView: View {
             }
             .sheet(item: $cropRequest) { request in
                 SquarePhotoCropEditorView(sourceImage: request.image) { croppedData in
-                    selectedPhotoData = croppedData
-                    photoKey = nil
+                    appendPhoto(croppedData)
                 }
             }
             .sheet(isPresented: $isShowingTagPicker) {
@@ -123,39 +128,6 @@ struct ContainerEditorView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-        }
-    }
-
-    private var photoPreview: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(.secondary.opacity(0.12))
-
-            if let selectedPhotoData,
-               let image = UIImage(data: selectedPhotoData) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(1)
-            } else if photoKey != nil {
-                RemotePhotoView(photoKey: photoKey, placeholderSystemName: "shippingbox.fill", contentMode: .fit)
-                    .padding(1)
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "shippingbox.fill")
-                        .font(.system(size: 34, weight: .semibold))
-                    Text("Фото контейнера")
-                        .font(.subheadline)
-                }
-                .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(1, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(.secondary.opacity(0.16), lineWidth: 1)
         }
     }
 
@@ -237,8 +209,8 @@ struct ContainerEditorView: View {
                     container,
                     name: trimmedName,
                     details: trimmedDetails,
-                    photoData: selectedPhotoData,
-                    removePhoto: photoKey == nil && container.photoKey != nil && selectedPhotoData == nil,
+                    photos: photos,
+                    primaryPhotoID: primaryPhotoID,
                     tagIDs: selectedTagIDs
                 )
             } else {
@@ -246,7 +218,8 @@ struct ContainerEditorView: View {
                     name: trimmedName,
                     details: trimmedDetails,
                     parentID: parentID,
-                    photoData: selectedPhotoData,
+                    photos: photos,
+                    primaryPhotoID: primaryPhotoID,
                     tagIDs: selectedTagIDs
                 )
             }
@@ -254,6 +227,14 @@ struct ContainerEditorView: View {
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func appendPhoto(_ data: Data) {
+        let photo = PhotoDraftPayload(data: data)
+        photos.append(photo)
+        if primaryPhotoID == nil {
+            primaryPhotoID = photo.id
         }
     }
 }

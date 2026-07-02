@@ -1,6 +1,18 @@
 import Foundation
 import SwiftUI
 
+struct PhotoDraftPayload: Identifiable, Equatable {
+    let id: UUID
+    var photoKey: String?
+    var data: Data?
+
+    init(id: UUID = UUID(), photoKey: String? = nil, data: Data? = nil) {
+        self.id = id
+        self.photoKey = photoKey
+        self.data = data
+    }
+}
+
 @MainActor
 final class StorageViewModel: ObservableObject {
     @Published var serverURL: String {
@@ -145,36 +157,33 @@ final class StorageViewModel: ObservableObject {
         }
     }
 
-    func createContainer(name: String, details: String, parentID: UUID?, photoData: Data?, tagIDs: Set<UUID>) async throws {
+    func createContainer(name: String, details: String, parentID: UUID?, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
-            let photoKey = try await self.uploadPhotoIfNeeded(photoData, folder: "containers")
+            let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "containers")
             let _: StorageContainer = try await self.api.post("/containers", body: ContainerSaveRequest(
                 name: name,
                 details: details,
                 parentId: parentID,
-                photoKey: photoKey,
+                photoKey: photoPayload.primaryPhotoKey,
+                photoKeys: photoPayload.photoKeys,
+                primaryPhotoKey: photoPayload.primaryPhotoKey,
                 tagIds: tagIDs
             ))
             try await self.refreshData()
         }
     }
 
-    func updateContainer(_ container: StorageContainer, name: String, details: String, photoData: Data?, removePhoto: Bool, tagIDs: Set<UUID>) async throws {
+    func updateContainer(_ container: StorageContainer, name: String, details: String, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
-            let photoKey: String?
-            if let photoData {
-                photoKey = try await self.uploadPhotoIfNeeded(photoData, folder: "containers")
-            } else if removePhoto {
-                photoKey = ""
-            } else {
-                photoKey = container.photoKey
-            }
+            let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "containers")
 
             let _: StorageContainer = try await self.api.patch("/containers/\(container.id.uuidString)", body: ContainerPatchRequest(
                 name: name,
                 details: details,
                 parentId: container.parentID,
-                photoKey: photoKey
+                photoKey: photoPayload.primaryPhotoKey ?? "",
+                photoKeys: photoPayload.photoKeys,
+                primaryPhotoKey: photoPayload.primaryPhotoKey
             ))
             let _: StorageContainer = try await self.api.put("/containers/\(container.id.uuidString)/tags", body: TagAssignmentRequest(tagIds: tagIDs))
             try await self.refreshData()
@@ -188,36 +197,33 @@ final class StorageViewModel: ObservableObject {
         }
     }
 
-    func createItem(name: String, description: String, containerID: UUID?, photoData: Data?, tagIDs: Set<UUID>) async throws {
+    func createItem(name: String, description: String, containerID: UUID?, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
-            let photoKey = try await self.uploadPhotoIfNeeded(photoData, folder: "items")
+            let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "items")
             let _: StoredItem = try await self.api.post("/items", body: ItemSaveRequest(
                 name: name,
                 description: description,
                 containerId: containerID,
-                photoKey: photoKey,
+                photoKey: photoPayload.primaryPhotoKey,
+                photoKeys: photoPayload.photoKeys,
+                primaryPhotoKey: photoPayload.primaryPhotoKey,
                 tagIds: tagIDs
             ))
             try await self.refreshData()
         }
     }
 
-    func updateItem(_ item: StoredItem, name: String, description: String, photoData: Data?, removePhoto: Bool, tagIDs: Set<UUID>) async throws {
+    func updateItem(_ item: StoredItem, name: String, description: String, photos: [PhotoDraftPayload], primaryPhotoID: UUID?, tagIDs: Set<UUID>) async throws {
         try await authenticated {
-            let photoKey: String?
-            if let photoData {
-                photoKey = try await self.uploadPhotoIfNeeded(photoData, folder: "items")
-            } else if removePhoto {
-                photoKey = ""
-            } else {
-                photoKey = item.photoKey
-            }
+            let photoPayload = try await self.uploadPhotos(photos, primaryPhotoID: primaryPhotoID, folder: "items")
 
             let _: StoredItem = try await self.api.patch("/items/\(item.id.uuidString)", body: ItemPatchRequest(
                 name: name,
                 description: description,
                 containerId: item.containerID,
-                photoKey: photoKey
+                photoKey: photoPayload.primaryPhotoKey ?? "",
+                photoKeys: photoPayload.photoKeys,
+                primaryPhotoKey: photoPayload.primaryPhotoKey
             ))
             let _: StoredItem = try await self.api.put("/items/\(item.id.uuidString)/tags", body: TagAssignmentRequest(tagIds: tagIDs))
             try await self.refreshData()
@@ -253,11 +259,20 @@ final class StorageViewModel: ObservableObject {
         }
     }
 
-    private func uploadPhotoIfNeeded(_ data: Data?, folder: String) async throws -> String? {
-        guard let data else {
-            return nil
+    private func uploadPhotos(_ photos: [PhotoDraftPayload], primaryPhotoID: UUID?, folder: String) async throws -> (photoKeys: [String], primaryPhotoKey: String?) {
+        var uploaded: [(id: UUID, key: String)] = []
+
+        for photo in photos {
+            if let data = photo.data {
+                uploaded.append((photo.id, try await api.uploadPhoto(data, folder: folder).key))
+            } else if let photoKey = photo.photoKey, !photoKey.isEmpty {
+                uploaded.append((photo.id, photoKey))
+            }
         }
-        return try await api.uploadPhoto(data, folder: folder).key
+
+        let photoKeys = uploaded.map(\.key)
+        let primaryPhotoKey = uploaded.first { $0.id == primaryPhotoID }?.key ?? photoKeys.first
+        return (photoKeys, primaryPhotoKey)
     }
 
     private func authenticated<T>(_ operation: () async throws -> T) async throws -> T {
@@ -334,6 +349,8 @@ private struct ContainerSaveRequest: Codable {
     var details: String
     var parentId: UUID?
     var photoKey: String?
+    var photoKeys: [String]
+    var primaryPhotoKey: String?
     var tagIds: Set<UUID>
 }
 
@@ -342,6 +359,8 @@ private struct ContainerPatchRequest: Codable {
     var details: String
     var parentId: UUID?
     var photoKey: String?
+    var photoKeys: [String]
+    var primaryPhotoKey: String?
 }
 
 private struct ItemSaveRequest: Codable {
@@ -349,6 +368,8 @@ private struct ItemSaveRequest: Codable {
     var description: String
     var containerId: UUID?
     var photoKey: String?
+    var photoKeys: [String]
+    var primaryPhotoKey: String?
     var tagIds: Set<UUID>
 }
 
@@ -357,6 +378,8 @@ private struct ItemPatchRequest: Codable {
     var description: String
     var containerId: UUID?
     var photoKey: String?
+    var photoKeys: [String]
+    var primaryPhotoKey: String?
 }
 
 private struct TagSaveRequest: Codable {
